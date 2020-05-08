@@ -18,6 +18,7 @@ namespace App
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<AnnotationEntity> Annotation { get; set; }
 
         public SchoolContext(
             string connectionString, bool useConsoleLogger, EventDispatcher eventDispatcher)
@@ -38,8 +39,8 @@ namespace App
             });
 
             optionsBuilder
-                .UseSqlServer(_connectionString)
-                .UseLazyLoadingProxies();
+                .UseSqlServer(_connectionString);
+                //.UseLazyLoadingProxies();
 
             if (_useConsoleLogger)
             {
@@ -88,6 +89,20 @@ namespace App
                 x.HasOne(p => p.Student).WithMany(p => p.Enrollments);
                 x.HasOne(p => p.Course).WithMany();
                 x.Property(p => p.Grade);
+            });
+            modelBuilder.Entity<AnnotationEntity>(x =>
+            {
+                x.Property(y => y.Value).IsRequired();
+
+                x.HasMany(p => p.AnnotationObjects).WithOne(p => p.Annotation)
+                     .OnDelete(DeleteBehavior.Cascade)
+                     .Metadata.PrincipalToDependent.SetPropertyAccessMode(PropertyAccessMode.Field);
+            });
+            modelBuilder.Entity<AnnotationObjectEntity>(x =>
+            {
+                x.ToTable("AnnotationObject").HasKey(k => k.Id);
+                x.Property(p => p.Id).HasColumnName("Id");
+                x.HasOne(p => p.Annotation).WithMany(p => p.AnnotationObjects);
             });
         }
 
